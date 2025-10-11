@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -10,19 +10,38 @@
     <style>
         /* --- ИЗМЕНЕНИЯ ДЛЯ ЦЕНТРИРОВАНИЯ И ВЫСОТЫ --- */
         html, body {
-            /* Убрано height: 100% для корректной работы скролла при высоте 2000px */
             margin: 0; 
             padding: 0;
             background-color: #000000;
         }
         
+        /* ДОБАВЛЕННЫЙ СТИЛЬ ДЛЯ GIF-КОНТЕЙНЕРА */
+        .gif-container {
+            width: 90vw; /* Ширина плеера */
+            margin-top: 50px; /* Отступ сверху */
+            margin-left: auto; 
+            margin-right: auto; 
+            text-align: center;
+        }
+        
+        .gif-container img {
+            width: 100%; /* Занимает всю ширину gif-container (90vw) */
+            height: auto;
+            display: block; 
+            border-radius: 8px; 
+            
+            /* Удалены все фильтры и классы, которые имитировали статичность. 
+               Изображение c.png будет статичным само по себе. */
+        }
+
         .mini-player-container {
             /* Новые требования: */
-            width: 90vw; /* 100vw - 10vw (слева) - 10vw (справа) = 80% ширины экрана */
-            height: 700px; /* Высота 2000 пикселей */
-            margin-top: 50px; /* Отступ сверху 50 пикселей */
-            margin-left: auto; /* Центрирование */
-            margin-right: auto; /* Центрирование */
+            width: 90vw; 
+            height: 500px; 
+            /* Отступ, чтобы отделить от GIF. */
+            margin-top: 10px; 
+            margin-left: auto; 
+            margin-right: auto; 
             
             /* Остальные стили плеера: */
             padding: 15px;
@@ -34,12 +53,12 @@
             color: #E0E0E0;
             display: flex; 
             flex-direction: column; 
-            box-sizing: border-box; /* Важно, чтобы padding не увеличивал 2000px высоту */
+            box-sizing: border-box; 
         }
         
         /* Стили элементов управления плеером (сохранены как в оригинале, но адаптированы под flexbox) */
         
-        .current-track-info, .controls, .time-slider-group, hr {
+        .current-track-info, .controls, .time-slider-group, hr, .track-search-group {
             flex-shrink: 0; 
         }
 
@@ -68,7 +87,7 @@
             margin: 0 5px;
         }
 
-        .control-button, #add-file-label {
+        .control-button, #add-file-label, #search-clear-btn {
             background: none;
             border: none;
             cursor: pointer;
@@ -87,11 +106,12 @@
              font-size: 28px; 
         }
         
-        .control-button:hover, #add-file-label:hover {
+        .control-button:hover, #add-file-label:hover, #search-clear-btn:hover {
             color: #FFA500;
             transform: scale(1.1);
         }
 
+        /* Класс, который меняет цвет кнопки при активном перемешивании */
         .control-button.shuffle-active {
             color: #FFD700;
             transform: scale(1.1);
@@ -134,10 +154,10 @@
             margin: 10px 0;
         }
         
-        /* Изменения для плейлиста: он займет оставшуюся часть высоты 2000px */
+        /* Изменения для плейлиста */
         .playlist-window {
             height: auto; 
-            flex-grow: 1; /* Займет все оставшееся место по высоте */
+            flex-grow: 1; 
             overflow-y: auto;
             border: 1px solid #333;
             padding: 5px 0;
@@ -145,6 +165,7 @@
             font-size: 14px;
             border-radius: 4px;
             min-height: 50px; 
+            margin-bottom: 10px; /* Отступ перед поиском */
         }
         
         .playlist-item {
@@ -180,9 +201,53 @@
         #file-input {
             display: none;
         }
+
+        /* --- Стили для поля поиска --- */
+        .track-search-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background-color: #111;
+            padding: 5px;
+        }
+
+        #track-search-input {
+            flex-grow: 1;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            color: #E0E0E0;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* Скрытие стандартной кнопки очистки в Chrome/Safari */
+        #track-search-input::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        #search-clear-btn {
+            font-size: 18px;
+            width: 30px;
+            height: 30px;
+            color: #888;
+            padding: 0;
+            display: none; /* Сначала скрыто */
+        }
+        #search-clear-btn:hover {
+            color: #FFA500;
+            transform: scale(1.05);
+        }
+
     </style>
 </head>
 <body>
+    
+    <div class="gif-container">
+        <img src="c.png" alt="Изображение над плеером" id="track-image">
+    </div>
 
     <div class="mini-player-container">
 
@@ -199,7 +264,9 @@
         </div>
 
         <div class="controls">
-            <button class="control-button" title="Перемешать" id="shuffle-btn">🔀</button>
+            <button class="control-button" title="Перемешать" id="shuffle-btn">
+                <span id="shuffle-icon">🔀</span>
+            </button>
             
             <div class="control-group">
                 <button class="control-button" title="Предыдущий" id="prev-btn">&#x23EE;&#xFE0F;</button>
@@ -218,7 +285,11 @@
             <div style="text-align: center; padding: 10px; color: #888;">Плейлист пуст. Добавьте файлы!</div>
         </div>
 
-    </div>
+        <div class="track-search-group">
+            <input type="search" id="track-search-input" placeholder="Поиск по названию или номеру...">
+            <button id="search-clear-btn" title="Очистить поиск">✕</button>
+        </div>
+        </div>
 
     <audio id="audio-player" style="display: none;"></audio>
 
@@ -238,10 +309,22 @@
         const fileInput = document.getElementById('file-input');
         const playPauseBtn = document.getElementById('play-pause-btn');
         const shuffleBtn = document.getElementById('shuffle-btn');
+        const shuffleIcon = document.getElementById('shuffle-icon');
         const currentTrackNameDisplay = document.getElementById('current-track-name');
         const timeSlider = document.getElementById('time-slider');
         const currentTimeDisplay = document.getElementById('current-time');
         const totalTimeDisplay = document.getElementById('total-time');
+        
+        // Элементы поиска 
+        const searchInput = document.getElementById('track-search-input');
+        const searchClearBtn = document.getElementById('search-clear-btn');
+        
+        // Элемент изображения (ИЗМЕНЕНО)
+        const trackImage = document.getElementById('track-image'); 
+        
+        // Константы для путей к изображениям (ДОБАВЛЕНО)
+        const GIF_SRC = "c.gif";
+        const PNG_SRC = "c.png";
 
         let originalPlaylist = []; 
         let currentPlaylist = [];   
@@ -250,7 +333,19 @@
         let isSeeking = false;
         
         let playbackOrder = []; 
-        let currentPlaybackIndex = -1;
+        let currentPlaybackIndex = -1; 
+
+        // --- НОВАЯ ФУНКЦИЯ ДЛЯ УПРАВЛЕНИЯ ИЗОБРАЖЕНИЕМ (ИЗМЕНЕНО) ---
+        function setTrackImage(isPlaying) {
+            if (isPlaying) {
+                // Если играет, ставим GIF и добавляем случайный параметр, чтобы запустить анимацию с начала
+                trackImage.src = GIF_SRC + '?' + Date.now();
+            } else {
+                // Если не играет, ставим PNG (статичное изображение)
+                trackImage.src = PNG_SRC;
+            }
+        }
+        // ----------------------------------------------------
 
         // --- Вспомогательные функции ---
 
@@ -279,7 +374,7 @@
             }
         }
 
-        // --- Функции управления плеером ---
+        // --- Функции управления плеером (ОБНОВЛЕНЫ для работы с ID и оригинальным индексом) ---
 
         function updateTrackDisplay() {
             if (currentTrackIndex >= 0 && currentPlaylist.length > 0) {
@@ -300,13 +395,30 @@
         
         function playTrack(index) {
             if (index >= 0 && index < currentPlaylist.length) {
-                currentTrackIndex = index;
-                audioPlayer.src = URL.createObjectURL(currentPlaylist[index].file);
+                const trackToPlay = currentPlaylist[index]; // Трек из отфильтрованного списка
+                const originalIndex = originalPlaylist.findIndex(t => t.id === trackToPlay.id); // Его индекс в оригинальном списке
+                
+                if (originalIndex === -1) return; 
+
+                currentTrackIndex = index; // Индекс в текущем (отфильтрованном) списке
+                
+                audioPlayer.src = URL.createObjectURL(trackToPlay.file);
                 audioPlayer.play();
                 playPauseBtn.innerHTML = '&#x23F8;&#xFE0F;';
                 
+                // Включаем GIF
+                setTrackImage(true);
+                
+                // Обновляем currentPlaybackIndex для корректной работы playNext/playPrev
                 if (isShuffling) {
-                    currentPlaybackIndex = playbackOrder.findIndex(i => i === index);
+                    currentPlaybackIndex = playbackOrder.indexOf(originalIndex);
+                    if (currentPlaybackIndex === -1) {
+                         // Если трек не был в порядке воспроизведения (например, добавлен или не найден)
+                         buildPlaybackOrder(); 
+                         currentPlaybackIndex = playbackOrder.indexOf(originalIndex);
+                    }
+                } else {
+                    currentPlaybackIndex = originalIndex;
                 }
                 
                 updateTrackDisplay(); 
@@ -315,6 +427,10 @@
                 currentPlaybackIndex = -1;
                 audioPlayer.src = '';
                 playPauseBtn.innerHTML = '&#x25B6;&#xFE0F;';
+                
+                // Выключаем GIF, ставим PNG
+                setTrackImage(false);
+                
                 updateTrackDisplay();
             }
         }
@@ -322,14 +438,32 @@
         function togglePlayPause() {
             if (audioPlayer.paused) {
                 if (currentTrackIndex === -1 && currentPlaylist.length > 0) {
-                    playTrack(0); 
+                    // Если ничего не играет, но плейлист (отфильтрованный) не пуст
+                    if (isShuffling && playbackOrder.length > 0) {
+                        // Начинаем с первого трека в порядке шаффла
+                        const firstTrackInOrder = originalPlaylist[playbackOrder[0]];
+                        const filteredIndex = currentPlaylist.findIndex(t => t.id === firstTrackInOrder.id);
+                        
+                        if (filteredIndex !== -1) {
+                             playTrack(filteredIndex);
+                        } else {
+                             // Если первый трек шаффла не прошел фильтр, берем первый отфильтрованный
+                             playTrack(0);
+                        }
+                    } else {
+                        playTrack(0); 
+                    }
                 } else if (currentTrackIndex !== -1) {
                     audioPlayer.play();
                     playPauseBtn.innerHTML = '&#x23F8;&#xFE0F;';
+                    // Включаем GIF
+                    setTrackImage(true);
                 }
             } else {
                 audioPlayer.pause();
                 playPauseBtn.innerHTML = '&#x25B6;&#xFE0F;';
+                // Выключаем GIF, ставим PNG
+                setTrackImage(false);
             }
         }
 
@@ -339,62 +473,96 @@
              playPauseBtn.innerHTML = '&#x25B6;&#xFE0F;';
              timeSlider.value = 0;
              currentTimeDisplay.textContent = '0:00';
+             // Выключаем GIF, ставим PNG
+             setTrackImage(false);
              updateTrackDisplay(); 
         }
 
         function playNext() {
-            if (currentPlaylist.length === 0) return;
+            if (originalPlaylist.length === 0 || currentPlaylist.length === 0) return;
             
-            let nextTrackIndex;
+            let nextTrackId;
 
             if (isShuffling) {
-                const nextPlaybackIndex = (currentPlaybackIndex + 1) % playbackOrder.length;
-                nextTrackIndex = playbackOrder[nextPlaybackIndex];
-                currentPlaybackIndex = nextPlaybackIndex;
+                // Идем по playbackOrder (индексы оригинального списка)
+                let nextPlaybackIndex = (currentPlaybackIndex + 1) % playbackOrder.length;
+                
+                // Трек, который должен быть следующим по шаффлу
+                const trackToPlay = originalPlaylist[playbackOrder[nextPlaybackIndex]];
+                nextTrackId = trackToPlay.id;
             } else {
-                nextTrackIndex = (currentTrackIndex + 1) % currentPlaylist.length;
+                // Идем по currentPlaylist (отфильтрованный список)
+                const nextTrackIndexInCurrent = (currentTrackIndex + 1) % currentPlaylist.length;
+                const trackToPlay = currentPlaylist[nextTrackIndexInCurrent];
+                nextTrackId = trackToPlay.id;
             }
 
-            playTrack(nextTrackIndex);
+            // Находим индекс трека в текущем (отфильтрованном) плейлисте
+            const nextTrackIndex = currentPlaylist.findIndex(t => t.id === nextTrackId);
+
+            if (nextTrackIndex !== -1) {
+                playTrack(nextTrackIndex);
+            } else {
+                 // Если следующий трек в шаффле не прошел фильтр, или произошла ошибка,
+                 // переходим на первый трек в отфильтрованном списке
+                 playTrack(0);
+            }
         }
 
         function playPrev() {
-            if (currentPlaylist.length === 0) return;
+            if (originalPlaylist.length === 0 || currentPlaylist.length === 0) return;
             
-            let prevTrackIndex;
+            let prevTrackId;
             
             if (isShuffling) {
+                // Идем по playbackOrder (индексы оригинального списка)
                 let prevPlaybackIndex = currentPlaybackIndex - 1;
                 if (prevPlaybackIndex < 0) {
                     prevPlaybackIndex = playbackOrder.length - 1;
                 }
-                prevTrackIndex = playbackOrder[prevPlaybackIndex];
-                currentPlaybackIndex = prevPlaybackIndex;
+                
+                const trackToPlay = originalPlaylist[playbackOrder[prevPlaybackIndex]];
+                prevTrackId = trackToPlay.id;
             } else {
-                let prevIndex = currentTrackIndex - 1;
-                if (prevIndex < 0) {
-                    prevIndex = currentPlaylist.length - 1;
+                // Идем по currentPlaylist (отфильтрованный список)
+                let prevIndexInCurrent = currentTrackIndex - 1;
+                if (prevIndexInCurrent < 0) {
+                    prevIndexInCurrent = currentPlaylist.length - 1;
                 }
-                prevTrackIndex = prevIndex;
+                const trackToPlay = currentPlaylist[prevIndexInCurrent];
+                prevTrackId = trackToPlay.id;
             }
 
-            playTrack(prevTrackIndex);
+            // Находим индекс трека в текущем (отфильтрованном) плейлисте
+            const prevTrackIndex = currentPlaylist.findIndex(t => t.id === prevTrackId);
+
+            if (prevTrackIndex !== -1) {
+                playTrack(prevTrackIndex);
+            } else {
+                 // Если предыдущий трек в шаффле не прошел фильтр, или произошла ошибка,
+                 // переходим на последний трек в отфильтрованном списке
+                 playTrack(currentPlaylist.length - 1);
+            }
         }
 
         // --- Функции плейлиста ---
 
         function buildPlaybackOrder() {
-            const indices = currentPlaylist.map((_, i) => i);
+            const indices = originalPlaylist.map((_, i) => i);
             
             if (isShuffling) {
                 playbackOrder = shuffleArray(indices);
                 
+                // Если что-то играет, ставим его в начало порядка воспроизведения
                 if (currentTrackIndex !== -1) {
-                    const oldIndexInOrder = playbackOrder.indexOf(currentTrackIndex);
+                    const currentTrackId = currentPlaylist[currentTrackIndex].id;
+                    const originalIndex = originalPlaylist.findIndex(t => t.id === currentTrackId);
+
+                    const oldIndexInOrder = playbackOrder.indexOf(originalIndex);
                     
                     if (oldIndexInOrder > 0) {
                         playbackOrder.splice(oldIndexInOrder, 1);
-                        playbackOrder.unshift(currentTrackIndex);
+                        playbackOrder.unshift(originalIndex);
                     }
                     currentPlaybackIndex = 0;
                 } else {
@@ -402,7 +570,12 @@
                 }
             } else {
                 playbackOrder = indices;
-                currentPlaybackIndex = currentTrackIndex;
+                if (currentTrackIndex !== -1) {
+                    const currentTrackId = currentPlaylist[currentTrackIndex].id;
+                    currentPlaybackIndex = originalPlaylist.findIndex(t => t.id === currentTrackId);
+                } else {
+                     currentPlaybackIndex = -1;
+                }
             }
         }
 
@@ -410,17 +583,35 @@
             isShuffling = !isShuffling;
             shuffleBtn.classList.toggle('shuffle-active', isShuffling);
             
+            // ЛОГИКА СМЕНЫ ИКОНКИ
+            shuffleIcon.innerHTML = isShuffling ? '🔁' : '🔀';
+            
             buildPlaybackOrder();
             
             if (isShuffling && currentTrackIndex === -1 && currentPlaylist.length > 0) {
-                 playTrack(playbackOrder[0]);
+                 // Если включаем шаффл и ничего не играет, начинаем с первого в шаффле
+                 const trackId = originalPlaylist[playbackOrder[0]].id;
+                 const filteredIndex = currentPlaylist.findIndex(t => t.id === trackId);
+                 if (filteredIndex !== -1) {
+                     playTrack(filteredIndex);
+                 } else if (currentPlaylist.length > 0) {
+                     playTrack(0); // Или первый отфильтрованный, если шаффл-трек не прошел фильтр
+                 }
             }
         }
 
         function renderPlaylist() {
             playlistWindow.innerHTML = '';
+            
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const currentTrackId = currentTrackIndex !== -1 ? currentPlaylist[currentTrackIndex].id : null;
+
             if (currentPlaylist.length === 0) {
-                playlistWindow.innerHTML = '<div style="text-align: center; padding: 10px; color: #888;">Плейлист пуст. Добавьте файлы!</div>';
+                const message = searchTerm 
+                    ? 'Треки не найдены.' 
+                    : 'Плейлист пуст. Добавьте файлы!';
+                    
+                playlistWindow.innerHTML = `<div style="text-align: center; padding: 10px; color: #888;">${message}</div>`;
                 return;
             }
             
@@ -429,9 +620,12 @@
                 item.className = 'playlist-item';
                 item.addEventListener('click', () => playTrack(index));
                 
+                // Ищем оригинальный индекс, чтобы отобразить правильный порядковый номер
+                const originalIndex = originalPlaylist.findIndex(t => t.id === track.id);
+                
                 const numberSpan = document.createElement('span');
                 numberSpan.className = 'playlist-item-number';
-                numberSpan.textContent = `${index + 1}.`;
+                numberSpan.textContent = `${originalIndex !== -1 ? originalIndex + 1 : index + 1}.`; // Показываем оригинальный номер
                 item.appendChild(numberSpan);
 
                 const nameSpan = document.createElement('span');
@@ -440,10 +634,71 @@
                 item.appendChild(nameSpan);
                 
                 item.dataset.id = track.id; 
+                
+                // Выделяем, если трек активен
+                if (track.id === currentTrackId) {
+                    item.classList.add('active');
+                }
 
                 playlistWindow.appendChild(item);
             });
-            updateTrackDisplay(); 
+            
+            scrollToActiveTrack(); 
+        }
+        
+        // ФУНКЦИЯ ФИЛЬТРАЦИИ (ДОБАВЛЕНО)
+        function filterPlaylist(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            const num = parseInt(searchTerm.trim(), 10);
+            
+            searchClearBtn.style.display = term ? 'flex' : 'none';
+
+            if (term) {
+                let filtered = [];
+
+                // 1. Поиск по порядковому номеру (если введенный текст - это число)
+                if (!isNaN(num) && num >= 1 && num <= originalPlaylist.length) {
+                    // Номер в плейлисте = индекс + 1
+                    filtered = [originalPlaylist[num - 1]];
+                } 
+                
+                // 2. Поиск по названию (если по номеру не найдено или число не введено)
+                if (filtered.length === 0) {
+                    currentPlaylist = originalPlaylist.filter(track => 
+                        track.name.toLowerCase().includes(term)
+                    );
+                } else {
+                    currentPlaylist = filtered;
+                }
+
+            } else {
+                // Если поиск пуст, currentPlaylist - это полный originalPlaylist
+                currentPlaylist = [...originalPlaylist];
+            }
+            
+            // Проверяем, остался ли текущий трек в отфильтрованном списке
+            if (currentTrackIndex !== -1) {
+                const playingTrackId = currentPlaylist[currentTrackIndex] ? currentPlaylist[currentTrackIndex].id : null;
+                const trackStillInFilter = currentPlaylist.some(t => t.id === playingTrackId);
+                
+                if (!trackStillInFilter) {
+                    // Если трек не прошел фильтр
+                    audioPlayer.pause();
+                    playPauseBtn.innerHTML = '&#x25B6;&#xFE0F;';
+                    currentTrackIndex = -1; 
+                    
+                    // Выключаем GIF, ставим PNG
+                    setTrackImage(false);
+                } else {
+                    // Обновляем currentTrackIndex, чтобы он указывал на правильный индекс в currentPlaylist
+                    currentTrackIndex = currentPlaylist.findIndex(t => t.id === playingTrackId);
+                }
+            } else if (currentPlaylist.length === 1 && currentTrackIndex === -1) {
+                 // Если найден один трек по номеру/названию и ничего не играло, начинаем воспроизведение
+                 playTrack(0);
+            }
+            
+            renderPlaylist();
         }
 
         function addFilesToPlaylist(files) {
@@ -457,13 +712,22 @@
                 originalPlaylist.push(newTrack);
             });
             
-            currentPlaylist = [...originalPlaylist];
-            
+            filterPlaylist(searchInput.value); // Применяем фильтр к новому списку
             buildPlaybackOrder();
-            renderPlaylist();
 
             if (currentTrackIndex === -1 && currentPlaylist.length > 0) {
-                 playTrack(0);
+                 // Начинаем проигрывание с первого трека, если ничего не играет
+                 if (isShuffling && playbackOrder.length > 0) {
+                     const trackId = originalPlaylist[playbackOrder[0]].id;
+                     const filteredIndex = currentPlaylist.findIndex(t => t.id === trackId);
+                     if (filteredIndex !== -1) {
+                         playTrack(filteredIndex);
+                     } else if (currentPlaylist.length > 0) {
+                         playTrack(0);
+                     }
+                 } else {
+                     playTrack(0);
+                 }
             }
         }
 
@@ -495,6 +759,17 @@
                 totalTimeDisplay.textContent = formatTime(audioPlayer.duration);
             }
         });
+        
+        // Управление GIF/PNG при Play/Pause (ДОБАВЛЕНО)
+        audioPlayer.addEventListener('play', () => {
+            setTrackImage(true);
+        });
+        audioPlayer.addEventListener('pause', () => {
+             // Проверяем, что пауза не вызвана концом трека или началом другого
+             if (audioPlayer.currentTime > 0) { 
+                 setTrackImage(false);
+             }
+        });
 
         timeSlider.addEventListener('mousedown', () => { isSeeking = true; });
         timeSlider.addEventListener('touchstart', () => { isSeeking = true; });
@@ -522,9 +797,21 @@
         });
 
         audioPlayer.addEventListener('ended', playNext);
+        
+        // --- Обработчики для поиска (ДОБАВЛЕНО) ---
+        searchInput.addEventListener('input', (event) => {
+            filterPlaylist(event.target.value);
+        });
+
+        searchClearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            filterPlaylist('');
+            searchInput.focus();
+        });
+
 
         // Инициализация
-        renderPlaylist();
+        filterPlaylist(''); // Изначально отображаем весь плейлист
     </script>
 </body>
 </html>
