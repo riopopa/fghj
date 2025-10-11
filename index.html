@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
         /* ИЗМЕНЕНИЯ ДЛЯ РАСТЯГИВАНИЯ НА ЭКРАН */
         body {
             font-family: Arial, sans-serif;
-            /* УДАЛЕН min-height: 100vh; — высота теперь управляется Telegram */
+            /* УДАЛЕН min-height: 100vh; */
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -20,7 +20,221 @@
             padding: 10px; 
             box-sizing: border-box; 
         }
-        /* ... Остальные стили без изменений ... */
+
+        .audio-player-container {
+            padding: 5px;
+            border: 1px solid #000;
+            background-color: #333; 
+            color: #00ff00; 
+            width: 100%; 
+            max-width: 900px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            border-radius: 0; 
+            border-top: 3px solid #666; 
+            border-bottom: 3px solid #111; 
+            /* ОГРАНИЧИВАЕМ МАКСИМАЛЬНУЮ ВЫСОТУ КОНТЕЙНЕРА В СТИЛЯХ */
+            max-height: 95vh; 
+            overflow-y: auto;
+        }
+        
+        h1 {
+            display: none; 
+        }
+
+        h2 {
+            font-size: 14px;
+            color: #ccc;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            border-bottom: 1px dashed #666;
+            padding-bottom: 3px;
+        }
+        
+        #folder-input {
+            display: none;
+        }
+        
+        /* --- НОВЫЙ БЛОК: СКОРОСТЬ и ГРОМКОСТЬ --- */
+        #top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: #444;
+            border-bottom: 1px solid #555;
+            margin-bottom: 5px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            gap: 5px;
+            color: #ccc;
+        }
+        
+        /* Стилизация ползунков (Speed/Volume) */
+        .control-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: #555;
+            cursor: pointer;
+            width: 80px; 
+            margin: 0 5px;
+        }
+
+        .control-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff00; 
+            border: 1px solid #000;
+        }
+
+        .control-slider::-moz-range-thumb {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff00; 
+            border: 1px solid #000;
+        }
+        
+        /* --- КОНЕЦ НОВОГО БЛОКА --- */
+
+        /* --- Стили для Шкалы Времени и Дисплея --- */
+        #playback-display {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+        }
+
+        #time-indicator {
+            font-size: 12px;
+            color: #00ff00; 
+            padding-right: 5px;
+            flex-shrink: 0;
+        }
+
+        #seek-bar {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px; 
+            background: #555;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        /* Ползунок (Chromium/Webkit) */
+        #seek-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff00; 
+            border: 1px solid #000;
+        }
+
+        /* Ползунок (Firefox) */
+        #seek-bar::-moz-range-thumb {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff00; 
+            border: 1px solid #000;
+        }
+        /* --- Конец Стили для Шкалы Времени и Дисплея --- */
+
+        /* --- Стили для Кастомных Кнопок Контроля --- */
+        #custom-controls {
+            display: flex;
+            justify-content: space-between; 
+            align-items: center; 
+            margin-top: 10px;
+            padding: 5px 10px; 
+            background-color: #444; 
+            border-top: 1px solid #555;
+            border-bottom: 1px solid #222;
+        }
+
+        #control-buttons-group {
+            display: flex;
+            gap: 10px; 
+        }
+        
+        .control-button {
+            background: none;
+            border: 1px solid transparent;
+            color: #00ff00; 
+            text-shadow: 0 0 5px #00ff00; 
+            font-size: 20px;
+            cursor: pointer;
+            padding: 2px 5px;
+            transition: background-color 0.1s;
+        }
+
+        .control-button:hover {
+            background-color: #555;
+            border-color: #777;
+        }
+        
+        #add-files-button {
+            background: none;
+            border: 1px solid #444;
+            padding: 3px 5px;
+            font-size: 18px;
+            cursor: pointer;
+            color: #00ff00; 
+            text-shadow: 0 0 5px #00ff00; 
+            transition: background-color 0.1s;
+        }
+        
+        #add-files-button:hover {
+            background-color: #555;
+            border-color: #00ff00;
+        }
+        
+        #audio-player {
+            display: none; 
+        }
+        /* --- Конец Стили для Кастомных Кнопок Контроля --- */
+
+
+        /* Стили для кнопки Shuffle */
+        #controls-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px; 
+            margin-bottom: 5px;
+        }
+
+        #shuffle-button {
+            background-color: #555;
+            color: #fff;
+            border: 1px solid #777;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-left: 10px;
+            transition: background-color 0.1s;
+        }
+
+        #shuffle-button:hover {
+            background-color: #777;
+        }
+
+        #shuffle-button.active {
+            background-color: #00ff00; 
+            color: #000;
+            border-color: #00ff00;
+            font-weight: bold;
+        }
 
         /* Стили для Плейлиста */
         #playlist {
@@ -29,18 +243,89 @@
             margin-top: 5px;
             border: 1px solid #222; 
             background-color: #222; 
-            /* СТРОКА 24: Уменьшенная высота, чтобы избежать разворачивания на весь экран */
+            /* ОГРАНИЧЕНИЕ ВЫСОТЫ КОНТЕНТА */
             height: 30vh; 
-            max-height: 500px; 
+            max-height: 300px; 
             overflow-y: auto; 
             font-size: 12px;
             margin-bottom: 5px; 
         }
-        /* ... Остальные стили без изменений ... */
+        
+        /* Стилизация полосы прокрутки (только для Webkit) */
+        #playlist::-webkit-scrollbar {
+            width: 8px;
+        }
+        #playlist::-webkit-scrollbar-track {
+            background: #111; 
+        }
+        #playlist::-webkit-scrollbar-thumb {
+            background: #555; 
+        }
+        #playlist::-webkit-scrollbar-thumb:hover {
+            background: #888; 
+        }
+
+        /* ИЗМЕНЕНИЕ: Отступы для нумерации */
+        #playlist li {
+            padding: 3px 5px;
+            cursor: pointer;
+            color: #fff; 
+            border-bottom: 1px dashed #444;
+            display: flex; 
+            gap: 10px;
+        }
+        
+        /* Стиль для номера трека */
+        .track-number {
+            color: #777; 
+            flex-shrink: 0;
+            width: 20px; 
+            text-align: right;
+        }
+        
+        /* Стиль для имени трека */
+        .track-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #playlist li:last-child {
+            border-bottom: none;
+        }
+
+        #playlist li:hover {
+            background-color: #555; 
+            color: #00ff00;
+        }
+        
+        /* Выделение текущего трека - как в Winamp (инверсия) */
+        #playlist li[data-playing="true"] {
+            font-weight: bold;
+            background-color: #00ff00 !important; 
+            color: #000 !important; 
+        }
+
+        /* Стили для Поиска */
+        #playlist-search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px;
+            background-color: #222; 
+            color: #00ff00; 
+            border: 1px solid #000;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        #playlist-search:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
     </style>
 </head>
 <body>
-    
+
     <div class="audio-player-container">
         <h1>Аудиоплеер</h1>
         
@@ -107,27 +392,46 @@
     </div>
 
     <script>
-        // --- СТРОКИ 12-20: ФУНКЦИЯ ДЛЯ УСТАНОВКИ ВЫСОТЫ ПРИЛОЖЕНИЯ ---
+        // КЛЮЧЕВОЙ ШАГ 2: Установка высоты приложения
         if (window.Telegram && window.Telegram.WebApp) {
             const tg = window.Telegram.WebApp;
             
-            // Получаем высоту, доступную для Telegram-клиента, и делим на 2
-            const halfScreenHeight = Math.round(tg.viewportHeight / 2);
+            // Сообщаем Telegram, что приложение готово
+            tg.ready();
+
+            // Функция для установки половины высоты
+            const setHalfHeight = () => {
+                // Если приложение уже развернуто на весь экран, 
+                // можно пропустить попытку уменьшения, но setViewportSettings 
+                // должен работать для ограничения.
+                
+                // Рассчитываем половину доступной высоты
+                const halfScreenHeight = Math.round(tg.viewportHeight / 2);
+                
+                // Устанавливаем максимальную высоту.
+                // Telegram использует эту высоту для первоначального открытия.
+                tg.setViewportSettings({ 
+                    max_height: halfScreenHeight
+                }, (err) => {
+                    if (err) console.error("Ошибка установки высоты WebApp:", err);
+                });
+            };
+
+            // Вызываем при загрузке
+            setHalfHeight();
             
-            // Устанавливаем максимальную высоту. Telegram подстроит окно
-            // под фактическое содержимое, но не превысит это значение.
-            tg.setViewportSettings({ max_height: halfScreenHeight }, (err) => {
-                if (err) console.error("Ошибка установки высоты WebApp:", err);
-            });
+            // Опционально: вызываем при изменении размеров экрана (например, поворот телефона)
+            tg.onEvent('viewportChanged', setHalfHeight);
+            
+            // Убедитесь, что вы НЕ вызываете tg.expand() нигде в коде!
         }
         // ------------------------------------------------------------------
+
 
         const audioPlayer = document.getElementById('audio-player');
         const playlist = document.getElementById('playlist');
         const shuffleButton = document.getElementById('shuffle-button');
         const searchInput = document.getElementById('playlist-search');
-        
-        // ... Остальной код JavaScript без изменений ...
         
         const playButton = document.getElementById('play-track'); 
         const pauseButton = document.getElementById('pause-track'); 
@@ -144,7 +448,6 @@
         const volumeControl = document.getElementById('volume-control');
         const volumeValue = document.getElementById('volume-value');
         
-        // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Скрытый инпут для файлов
         const folderInput = document.getElementById('folder-input');
         
         let isShuffling = false;
