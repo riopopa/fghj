@@ -3,45 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Полноэкранный AMOLED-плеер</title>
+    <title>Центрированный плеер с большой высотой</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
-        /* --- ИЗМЕНЕНИЯ ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА И УВЕЛИЧЕННОГО ПЛЕЙЛИСТА --- */
+        /* --- ИЗМЕНЕНИЯ ДЛЯ ЦЕНТРИРОВАНИЯ И ВЫСОТЫ --- */
         html, body {
-            height: 100%; /* Устанавливаем 100% высоты для html и body */
-            margin: 0; /* Убираем внешние отступы для полноэкранного режима */
+            /* Убрано height: 100% для корректной работы скролла при высоте 2000px */
+            margin: 0; 
             padding: 0;
             background-color: #000000;
-            display: flex; /* Включаем Flexbox для body */
-            flex-direction: column; /* Элементы внутри body располагаются вертикально */
         }
         
         .mini-player-container {
-            width: 100%; 
-            /* max-width: 600px; - Убрано, чтобы плеер был на всю ширину */
-            flex-grow: 1; /* Позволяет контейнеру плеера занимать всю доступную высоту */
-            display: flex; /* Включаем Flexbox внутри контейнера */
-            flex-direction: column; /* Элементы внутри контейнера располагаются вертикально */
+            /* Новые требования: */
+            width: 80vw; /* 100vw - 10vw (слева) - 10vw (справа) = 80% ширины экрана */
+            height: 2000px; /* Высота 2000 пикселей */
+            margin-top: 50px; /* Отступ сверху 50 пикселей */
+            margin-left: auto; /* Центрирование */
+            margin-right: auto; /* Центрирование */
+            
+            /* Остальные стили плеера: */
             padding: 15px;
-            border: none; /* Убираем рамку, чтобы выглядело более "нативно" */
-            border-radius: 0; /* Убираем скругление */
-            box-shadow: none; /* Убираем тень */
+            border: 1px solid #333;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.2);
             font-family: Arial, sans-serif;
             background-color: #000000;
             color: #E0E0E0;
-            margin: 0; /* Убираем margin-left/right: auto */
-        }
-
-        /* Элементы управления плеером (неизменяемая часть) */
-        .current-track-info, .controls, .time-slider-group, hr {
-            flex-shrink: 0; /* Эти элементы не будут сжиматься */
+            display: flex; 
+            flex-direction: column; 
+            box-sizing: border-box; /* Важно, чтобы padding не увеличивал 2000px высоту */
         }
         
-        /* Группа слайдера и времени для flex-shrink */
-        .time-slider-group {
-            margin-bottom: 10px;
+        /* Стили элементов управления плеером (сохранены как в оригинале, но адаптированы под flexbox) */
+        
+        .current-track-info, .controls, .time-slider-group, hr {
+            flex-shrink: 0; 
         }
 
         .current-track-info {
@@ -98,6 +97,10 @@
             transform: scale(1.1);
         }
 
+        .time-slider-group {
+            margin-bottom: 10px;
+        }
+
         .time-slider {
             width: 100%;
             height: 6px;
@@ -131,17 +134,17 @@
             margin: 10px 0;
         }
         
-        /* --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ДЛЯ РАЗМЕРА ПЛЕЙЛИСТА --- */
+        /* Изменения для плейлиста: он займет оставшуюся часть высоты 2000px */
         .playlist-window {
-            height: auto; /* Убираем фиксированную высоту */
-            flex-grow: 1; /* Позволяем плейлисту занять оставшееся место */
+            height: auto; 
+            flex-grow: 1; /* Займет все оставшееся место по высоте */
             overflow-y: auto;
             border: 1px solid #333;
             padding: 5px 0;
             background-color: #111;
             font-size: 14px;
             border-radius: 4px;
-            min-height: 50px; /* Минимальная высота, если треков мало */
+            min-height: 50px; 
         }
         
         .playlist-item {
@@ -224,13 +227,8 @@
         if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
             Telegram.WebApp.ready();
             
-            // Расширяем WebApp на максимальную высоту
+            // Расширение WebApp до максимальной высоты, но с высотой 2000px будет скролл
             Telegram.WebApp.expand(); 
-            
-            // Если WebApp всё равно принудительно расширяется (баг клиента), 
-            // этот код может помочь зафиксировать высоту, хотя он больше 
-            // предназначен для проблем с клавиатурой.
-            // Telegram.WebApp.viewport.setStableHeight(true);
         }
         
         // --- Старый код плеера (только JS) ---
