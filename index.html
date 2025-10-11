@@ -200,15 +200,18 @@
     <audio id="audio-player" style="display: none;"></audio>
 
     <script>
-        // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Инициализация Telegram WebApp
+        // *** ИСПРАВЛЕННЫЙ КОД ДЛЯ ИНИЦИАЛИЗАЦИИ TELEGRAM WEBAPP ***
         if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
             Telegram.WebApp.ready();
             
-            // Если приложение открылось на весь экран, просим его уменьшиться
-            // до нужной высоты контента (по высоте плеера)
-            if (Telegram.WebApp.viewport.isExpanded) {
-                 Telegram.WebApp.expand(false); // Указывает приложению не занимать весь экран
-            }
+            // Вызываем expand() без аргументов. На мобильных это должно
+            // вернуть WebApp к его стандартной, минимизированной высоте (высоте контента).
+            Telegram.WebApp.expand(); 
+            
+            // Если WebApp всё равно принудительно расширяется (баг клиента), 
+            // этот код может помочь зафиксировать высоту, хотя он больше 
+            // предназначен для проблем с клавиатурой.
+            Telegram.WebApp.viewport.setStableHeight(true);
         }
         
         // --- Старый код плеера (только JS) ---
@@ -276,15 +279,6 @@
             });
             
             scrollToActiveTrack();
-            
-            // КЛЮЧЕВОЙ МОМЕНТ: Обновление высоты окна (Telegram WebApp)
-            if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
-                Telegram.WebApp.viewport.setStableHeight(true);
-                // Запрашивает изменение высоты окна приложения, чтобы оно соответствовало контенту
-                Telegram.WebApp.viewport.onEvent('viewportChanged', () => {
-                     // Часто необходимо для корректного отображения
-                });
-            }
         }
         
         function playTrack(index) {
