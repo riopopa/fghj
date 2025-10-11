@@ -1,741 +1,447 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Winamp-подобный Аудиоплеер (Мини-приложение)</title>
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
+    <title>AMOLED-плеер: Единый размер кнопок</title>
     <style>
-        /* ИЗМЕНЕНИЯ ДЛЯ РАСТЯГИВАНИЯ НА ЭКРАН */
-        body {
+        /* ОРАНЖЕВАЯ AMOLED Схема */
+        
+        .mini-player-container {
+            width: 350px;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.2);
             font-family: Arial, sans-serif;
-            /* УДАЛЕН min-height: 100vh; */
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            background-color: #222; 
-            margin: 0;
-            padding: 10px; 
-            box-sizing: border-box; 
+            background-color: #000000;
+            color: #E0E0E0;
         }
 
-        .audio-player-container {
-            padding: 5px;
-            border: 1px solid #000;
-            background-color: #333; 
-            color: #00ff00; 
-            width: 100%; 
-            max-width: 900px; 
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-            border-radius: 0; 
-            border-top: 3px solid #666; 
-            border-bottom: 3px solid #111; 
-            /* ОГРАНИЧИВАЕМ МАКСИМАЛЬНУЮ ВЫСОТУ КОНТЕЙНЕРА В СТИЛЯХ */
-            max-height: 95vh; 
-            overflow-y: auto;
-        }
-        
-        h1 {
-            display: none; 
-        }
-
-        h2 {
-            font-size: 14px;
-            color: #ccc;
-            margin-top: 10px;
+        .current-track-info {
+            text-align: center;
             margin-bottom: 5px;
-            border-bottom: 1px dashed #666;
-            padding-bottom: 3px;
-        }
-        
-        #folder-input {
-            display: none;
-        }
-        
-        /* --- НОВЫЙ БЛОК: СКОРОСТЬ и ГРОМКОСТЬ --- */
-        #top-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 10px;
-            background-color: #444;
-            border-bottom: 1px solid #555;
-            margin-bottom: 5px;
-        }
-
-        .control-group {
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-            gap: 5px;
-            color: #ccc;
-        }
-        
-        /* Стилизация ползунков (Speed/Volume) */
-        .control-slider {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 4px;
-            background: #555;
-            cursor: pointer;
-            width: 80px; 
-            margin: 0 5px;
-        }
-
-        .control-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #00ff00; 
-            border: 1px solid #000;
-        }
-
-        .control-slider::-moz-range-thumb {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #00ff00; 
-            border: 1px solid #000;
-        }
-        
-        /* --- КОНЕЦ НОВОГО БЛОКА --- */
-
-        /* --- Стили для Шкалы Времени и Дисплея --- */
-        #playback-display {
-            display: flex;
-            align-items: center;
-            padding: 5px 0;
-        }
-
-        #time-indicator {
-            font-size: 12px;
-            color: #00ff00; 
-            padding-right: 5px;
-            flex-shrink: 0;
-        }
-
-        #seek-bar {
-            width: 100%;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 4px; 
-            background: #555;
-            margin: 0;
-            cursor: pointer;
-        }
-
-        /* Ползунок (Chromium/Webkit) */
-        #seek-bar::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #00ff00; 
-            border: 1px solid #000;
-        }
-
-        /* Ползунок (Firefox) */
-        #seek-bar::-moz-range-thumb {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #00ff00; 
-            border: 1px solid #000;
-        }
-        /* --- Конец Стили для Шкалы Времени и Дисплея --- */
-
-        /* --- Стили для Кастомных Кнопок Контроля --- */
-        #custom-controls {
-            display: flex;
-            justify-content: space-between; 
-            align-items: center; 
-            margin-top: 10px;
-            padding: 5px 10px; 
-            background-color: #444; 
-            border-top: 1px solid #555;
-            border-bottom: 1px solid #222;
-        }
-
-        #control-buttons-group {
-            display: flex;
-            gap: 10px; 
-        }
-        
-        .control-button {
-            background: none;
-            border: 1px solid transparent;
-            color: #00ff00; 
-            text-shadow: 0 0 5px #00ff00; 
-            font-size: 20px;
-            cursor: pointer;
-            padding: 2px 5px;
-            transition: background-color 0.1s;
-        }
-
-        .control-button:hover {
-            background-color: #555;
-            border-color: #777;
-        }
-        
-        #add-files-button {
-            background: none;
-            border: 1px solid #444;
-            padding: 3px 5px;
-            font-size: 18px;
-            cursor: pointer;
-            color: #00ff00; 
-            text-shadow: 0 0 5px #00ff00; 
-            transition: background-color 0.1s;
-        }
-        
-        #add-files-button:hover {
-            background-color: #555;
-            border-color: #00ff00;
-        }
-        
-        #audio-player {
-            display: none; 
-        }
-        /* --- Конец Стили для Кастомных Кнопок Контроля --- */
-
-
-        /* Стили для кнопки Shuffle */
-        #controls-group {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 10px; 
-            margin-bottom: 5px;
-        }
-
-        #shuffle-button {
-            background-color: #555;
-            color: #fff;
-            border: 1px solid #777;
-            padding: 3px 8px;
-            cursor: pointer;
-            font-size: 12px;
-            flex-shrink: 0;
-            margin-left: 10px;
-            transition: background-color 0.1s;
-        }
-
-        #shuffle-button:hover {
-            background-color: #777;
-        }
-
-        #shuffle-button.active {
-            background-color: #00ff00; 
-            color: #000;
-            border-color: #00ff00;
             font-weight: bold;
-        }
-
-        /* Стили для Плейлиста */
-        #playlist {
-            list-style: none;
-            padding: 0;
-            margin-top: 5px;
-            border: 1px solid #222; 
-            background-color: #222; 
-            /* ОГРАНИЧЕНИЕ ВЫСОТЫ КОНТЕНТА */
-            height: 30vh; 
-            max-height: 300px; 
-            overflow-y: auto; 
-            font-size: 12px;
-            margin-bottom: 5px; 
-        }
-        
-        /* Стилизация полосы прокрутки (только для Webkit) */
-        #playlist::-webkit-scrollbar {
-            width: 8px;
-        }
-        #playlist::-webkit-scrollbar-track {
-            background: #111; 
-        }
-        #playlist::-webkit-scrollbar-thumb {
-            background: #555; 
-        }
-        #playlist::-webkit-scrollbar-thumb:hover {
-            background: #888; 
-        }
-
-        /* ИЗМЕНЕНИЕ: Отступы для нумерации */
-        #playlist li {
-            padding: 3px 5px;
-            cursor: pointer;
-            color: #fff; 
-            border-bottom: 1px dashed #444;
-            display: flex; 
-            gap: 10px;
-        }
-        
-        /* Стиль для номера трека */
-        .track-number {
-            color: #777; 
-            flex-shrink: 0;
-            width: 20px; 
-            text-align: right;
-        }
-        
-        /* Стиль для имени трека */
-        .track-name {
+            color: #FFA500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        #playlist li:last-child {
-            border-bottom: none;
-        }
-
-        #playlist li:hover {
-            background-color: #555; 
-            color: #00ff00;
+        /* Панель управления */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
         
-        /* Выделение текущего трека - как в Winamp (инверсия) */
-        #playlist li[data-playing="true"] {
-            font-weight: bold;
-            background-color: #00ff00 !important; 
-            color: #000 !important; 
+        .control-group {
+            display: flex;
+            align-items: center;
+            flex-grow: 1; 
+            justify-content: space-around;
+            margin: 0 5px;
         }
 
-        /* Стили для Поиска */
-        #playlist-search {
+        /* Основной стиль для ВСЕХ кнопок */
+        .control-button, #add-file-label {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #E0E0E0;
+            transition: color 0.1s, transform 0.1s;
+            
+            /* Единый размер для всех кнопок */
+            width: 40px; 
+            height: 40px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            
+            /* Унифицированный размер эмодзи */
+            font-size: 24px; 
+        }
+
+        /* Отдельные кнопки, которым нужен чуть больший размер шрифта */
+        #shuffle-btn, #add-file-label {
+             font-size: 28px; /* Чуть больший размер для 🔀 и ➕ */
+        }
+        
+        .control-button:hover, #add-file-label:hover {
+            color: #FFA500;
+            transform: scale(1.1);
+        }
+
+        /* Стиль для активного перемешивания */
+        .control-button.shuffle-active {
+            color: #FFD700;
+            transform: scale(1.1);
+        }
+
+        /* Шкала времени и Плейлист (без изменений) */
+        .time-slider {
             width: 100%;
-            box-sizing: border-box;
-            padding: 5px;
-            background-color: #222; 
-            color: #00ff00; 
-            border: 1px solid #000;
-            font-size: 12px;
-            margin-top: 5px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #333;
+            border-radius: 4px;
+            margin: 10px 0;
+            cursor: pointer;
         }
-        
-        #playlist-search:focus {
-            outline: none;
-            border-color: #00ff00;
+        .time-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #FFA500;
+            cursor: pointer;
+        }
+        .time-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border: none;
+            border-radius: 50%;
+            background: #FFA500;
+            cursor: pointer;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #333;
+            margin: 10px 0;
+        }
+        .playlist-window {
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            padding: 5px 0;
+            background-color: #111;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+        .playlist-item {
+            display: flex;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .playlist-item-number {
+            color: #888;
+            width: 25px;
+            flex-shrink: 0;
+            text-align: right;
+            margin-right: 8px;
+        }
+        .playlist-item-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+        }
+        .playlist-item:hover {
+            background-color: #333;
+        }
+        .playlist-item.active {
+             background-color: #FFA500;
+             color: #000;
+             font-weight: bold;
+        }
+        #file-input {
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <div class="audio-player-container">
-        <h1>Аудиоплеер</h1>
-        
-        <audio id="audio-player"></audio>
-        
-        <div id="top-controls">
-            <div class="control-group">
-                <span>Скорость:</span>
-                <input type="range" id="playback-speed" class="control-slider" min="0.5" max="2.0" value="1.0" step="0.25">
-                <span id="speed-value">1.0x</span>
-            </div>
+    <div class="mini-player-container">
+
+        <div class="current-track-info" id="current-track-name">
+            Название трека - Исполнитель
+        </div>
+
+        <input type="range" min="0" max="100" value="0" class="time-slider" id="time-slider">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888;">
+            <span id="current-time">0:00</span>
+            <span id="total-time">--:--</span>
+        </div>
+
+        <div class="controls">
+            <button class="control-button" title="Перемешать" id="shuffle-btn">🔀</button>
             
             <div class="control-group">
-                <span>Громкость:</span>
-                <input type="range" id="volume-control" class="control-slider" min="0" max="1" value="1" step="0.01">
-                <span id="volume-value">100%</span>
+                <button class="control-button" title="Предыдущий" id="prev-btn">&#x23EE;&#xFE0F;</button>
+                <button class="control-button" title="Воспроизвести/Пауза" id="play-pause-btn">&#x25B6;&#xFE0F;</button>
+                <button class="control-button" title="Стоп" id="stop-btn">&#x23F9;&#xFE0F;</button>
+                <button class="control-button" title="Следующий" id="next-btn">&#x23ED;&#xFE0F;</button>
             </div>
-        </div>
-        <div id="playback-display">
-            <div id="time-indicator">0:00 / 0:00</div>
-            <input type="range" id="seek-bar" value="0" min="0" max="100">
-        </div>
 
-        <div id="custom-controls">
-            <div id="control-buttons-group">
-                <button class="control-button" id="prev-track">⏮️</button>
-                <button class="control-button" id="play-track">▶️</button>
-                <button class="control-button" id="pause-track">⏸️</button> 
-                <button class="control-button" id="stop-track">⏹️</button>
-                <button class="control-button" id="next-track">⏭️</button>
-            </div>
-            
-            <button id="add-files-button">➕</button>
+            <label for="file-input" class="control-button" title="Добавить файлы" id="add-file-label">➕</label>
+            <input type="file" id="file-input" accept="audio/*" multiple>
         </div>
 
+        <hr>
 
-        <input 
-            type="file" 
-            id="folder-input" 
-            accept="audio/mp3, audio/mpeg" 
-            multiple
-            webkitdirectory 
-            directory 
-            onchange="loadPlaylist(this.files)"
-        >
-
-
-        <div id="controls-group">
-            <h2>Плейлист</h2>
-            <button id="shuffle-button">Случайно</button>
+        <div class="playlist-window" id="playlist-window">
+            <div style="text-align: center; padding: 10px; color: #888;">Плейлист пуст. Добавьте файлы!</div>
         </div>
 
-        <ul id="playlist">
-            <li><span class="track-number"></span><span class="track-name">(Файлы появятся здесь после выбора)</span></li>
-        </ul>
-        
-        <input 
-            type="text" 
-            id="playlist-search" 
-            placeholder="Поиск по плейлисту..." 
-            onkeyup="filterPlaylist(this.value)"
-        >
-        
     </div>
 
+    <audio id="audio-player" style="display: none;"></audio>
+
     <script>
-        // КЛЮЧЕВОЙ ШАГ 2: Установка высоты приложения
-        if (window.Telegram && window.Telegram.WebApp) {
-            const tg = window.Telegram.WebApp;
-            
-            // Сообщаем Telegram, что приложение готово
-            tg.ready();
-
-            // Функция для установки половины высоты
-            const setHalfHeight = () => {
-                // Если приложение уже развернуто на весь экран, 
-                // можно пропустить попытку уменьшения, но setViewportSettings 
-                // должен работать для ограничения.
-                
-                // Рассчитываем половину доступной высоты
-                const halfScreenHeight = Math.round(tg.viewportHeight / 2);
-                
-                // Устанавливаем максимальную высоту.
-                // Telegram использует эту высоту для первоначального открытия.
-                tg.setViewportSettings({ 
-                    max_height: halfScreenHeight
-                }, (err) => {
-                    if (err) console.error("Ошибка установки высоты WebApp:", err);
-                });
-            };
-
-            // Вызываем при загрузке
-            setHalfHeight();
-            
-            // Опционально: вызываем при изменении размеров экрана (например, поворот телефона)
-            tg.onEvent('viewportChanged', setHalfHeight);
-            
-            // Убедитесь, что вы НЕ вызываете tg.expand() нигде в коде!
-        }
-        // ------------------------------------------------------------------
-
-
         const audioPlayer = document.getElementById('audio-player');
-        const playlist = document.getElementById('playlist');
-        const shuffleButton = document.getElementById('shuffle-button');
-        const searchInput = document.getElementById('playlist-search');
-        
-        const playButton = document.getElementById('play-track'); 
-        const pauseButton = document.getElementById('pause-track'); 
-        const stopButton = document.getElementById('stop-track');
-        const prevButton = document.getElementById('prev-track');
-        const nextButton = document.getElementById('next-track');
-        const addFilesButton = document.getElementById('add-files-button'); 
-        
-        const seekBar = document.getElementById('seek-bar');
-        const timeIndicator = document.getElementById('time-indicator');
-        
-        const speedControl = document.getElementById('playback-speed');
-        const speedValue = document.getElementById('speed-value');
-        const volumeControl = document.getElementById('volume-control');
-        const volumeValue = document.getElementById('volume-value');
-        
-        const folderInput = document.getElementById('folder-input');
-        
+        const playlistWindow = document.getElementById('playlist-window');
+        const fileInput = document.getElementById('file-input');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const currentTrackNameDisplay = document.getElementById('current-track-name');
+        const timeSlider = document.getElementById('time-slider');
+        const currentTimeDisplay = document.getElementById('current-time');
+        const totalTimeDisplay = document.getElementById('total-time');
+
+        let originalPlaylist = [];
+        let currentPlaylist = [];
+        let currentTrackIndex = -1;
         let isShuffling = false;
-        let allTrackItems = []; 
-        let isSeeking = false; 
+        let isSeeking = false;
 
-        // Инициализация громкости и скорости
-        audioPlayer.volume = parseFloat(volumeControl.value);
-        audioPlayer.playbackRate = parseFloat(speedControl.value);
-
-
-        // --- ФУНКЦИИ ФОРМАТИРОВАНИЯ ---
+        // --- Вспомогательные функции ---
 
         function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
         }
-
-
-        // --- ФУНКЦИИ УПРАВЛЕНИЯ ПЛЕЕРОМ ---
-
-        function highlightTrack(listItem) {
-            Array.from(playlist.children).forEach(li => li.removeAttribute('data-playing'));
-            
-            if (listItem) {
-                listItem.setAttribute('data-playing', 'true');
-                listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
         }
 
-        function playTrack(listItem) {
-            if (!listItem) return;
+        // --- Функции управления плеером ---
 
-            audioPlayer.src = listItem.dataset.url;
-            seekBar.value = 0; 
-            timeIndicator.textContent = '0:00 / 0:00';
-            
-            audioPlayer.play();
-            highlightTrack(listItem);
-        }
-
-        function playPreviousTrack() {
-            const visibleTracks = Array.from(playlist.children).filter(li => li.style.display !== 'none');
-            const currentTrack = visibleTracks.find(li => li.getAttribute('data-playing') === 'true');
-            
-            if (!currentTrack || visibleTracks.length === 0) return;
-
-            const tracks = visibleTracks;
-            const currentIndex = tracks.indexOf(currentTrack);
-            let prevTrack;
-
-            if (isShuffling) {
-                let prevIndex;
-                do {
-                    prevIndex = Math.floor(Math.random() * tracks.length);
-                } while (prevIndex === currentIndex);
-                prevTrack = tracks[prevIndex];
+        function updateTrackDisplay() {
+            if (currentTrackIndex >= 0 && currentPlaylist.length > 0) {
+                const track = currentPlaylist[currentTrackIndex];
+                currentTrackNameDisplay.textContent = `${track.name}`;
             } else {
-                let prevIndex = currentIndex - 1;
-                if (prevIndex < 0) {
-                    prevIndex = tracks.length - 1;
-                }
-                prevTrack = tracks[prevIndex];
+                currentTrackNameDisplay.textContent = 'Название трека - Исполнитель';
             }
 
-            if (prevTrack) {
-                playTrack(prevTrack);
-            }
-        }
-
-
-        function playNextTrack() {
-            const visibleTracks = Array.from(playlist.children).filter(li => li.style.display !== 'none');
-            const currentTrack = visibleTracks.find(li => li.getAttribute('data-playing') === 'true');
-            
-            if (!currentTrack || visibleTracks.length === 0) {
-                if (visibleTracks.length > 0) {
-                    playTrack(visibleTracks[0]);
-                }
-                return;
-            }
-
-            let nextTrack;
-            const tracks = visibleTracks;
-
-            if (isShuffling) {
-                const currentIndex = tracks.indexOf(currentTrack);
-                let nextIndex;
-
-                if (tracks.length <= 1) return; 
-
-                do {
-                    nextIndex = Math.floor(Math.random() * tracks.length);
-                } while (nextIndex === currentIndex);
-
-                nextTrack = tracks[nextIndex];
-
-            } else {
-                const currentIndex = tracks.indexOf(currentTrack);
-                let nextIndex = currentIndex + 1;
-                
-                if (nextIndex >= tracks.length) {
-                    nextIndex = 0;
-                }
-                nextTrack = tracks[nextIndex];
-            }
-
-            if (nextTrack) {
-                playTrack(nextTrack);
-            }
-        }
-
-        // --- ФУНКЦИЯ ПОИСКА ---
-        function filterPlaylist(searchTerm) {
-            const term = searchTerm.toLowerCase().trim();
-
-            allTrackItems.forEach(listItem => {
-                const trackNameElement = listItem.querySelector('.track-name');
-                const trackNumberElement = listItem.querySelector('.track-number');
-
-                if (!trackNameElement) return;
-
-                const trackName = trackNameElement.textContent.toLowerCase();
-                
-                if (trackName.includes(term)) {
-                    listItem.style.display = 'flex'; 
-                } else {
-                    listItem.style.display = 'none'; 
-                }
+            document.querySelectorAll('.playlist-item').forEach((item, index) => {
+                item.classList.toggle('active', index === currentTrackIndex);
             });
-            
-            const currentTrack = document.querySelector('#playlist li[data-playing="true"]');
-            if (currentTrack && currentTrack.style.display === 'none') {
-                // Ничего не делаем, если играющий трек скрыт поиском
-            }
         }
         
-        // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
-        
-        // КЛЮЧЕВОЙ ОБРАБОТЧИК ДЛЯ СБРОСА INPUT VALUE
-        addFilesButton.addEventListener('click', function() {
-            // Перед открытием диалога сбрасываем значение input
-            folderInput.value = null; 
-            folderInput.click();
-        });
-
-
-        function loadPlaylist(files) {
-            playlist.innerHTML = '';
-            allTrackItems = [];
-            
-            if (files.length === 0) {
-                playlist.innerHTML = '<li><span class="track-number"></span><span class="track-name">(Нет выбранных файлов)</span></li>';
-                audioPlayer.src = '';
-                return;
-            }
-
-            // Находим все аудиофайлы
-            const audioFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
-
-            if (audioFiles.length === 0) {
-                 playlist.innerHTML = '<li><span class="track-number"></span><span class="track-name">(Нет аудиофайлов в папке)</span></li>';
-                 audioPlayer.src = '';
-                 return;
-            }
-
-            audioFiles.forEach((file, index) => {
-                const listItem = document.createElement('li');
-                
-                // Добавляем нумерацию и имя трека
-                listItem.innerHTML = `<span class="track-number">${index + 1}.</span><span class="track-name">${file.name}</span>`;
-                listItem.dataset.url = URL.createObjectURL(file); 
-                
-                listItem.addEventListener('click', function() {
-                    playTrack(this);
-                });
-
-                playlist.appendChild(listItem);
-                allTrackItems.push(listItem); 
-            });
-            
-            if (playlist.children.length > 0) {
-                playTrack(playlist.children[0]);
-            }
-            searchInput.value = '';
-        }
-        
-        // Автоматическое воспроизведение следующего трека
-        audioPlayer.addEventListener('ended', playNextTrack);
-        
-        // Событие, когда браузер может определить длительность трека
-        audioPlayer.addEventListener('loadedmetadata', () => {
-            seekBar.max = audioPlayer.duration;
-            timeIndicator.textContent = `0:00 / ${formatTime(audioPlayer.duration)}`;
-        });
-        
-        // Обновление шкалы и времени во время воспроизведения
-        audioPlayer.addEventListener('timeupdate', () => {
-            if (!isSeeking) {
-                seekBar.value = audioPlayer.currentTime;
-                timeIndicator.textContent = `${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`;
-            }
-        });
-
-        // Начало перетаскивания ползунка
-        seekBar.addEventListener('mousedown', () => {
-            isSeeking = true;
-        });
-        seekBar.addEventListener('touchstart', () => {
-            isSeeking = true;
-        });
-
-        // Завершение перетаскивания ползунка и перемотка
-        seekBar.addEventListener('mouseup', () => {
-            isSeeking = false;
-            audioPlayer.currentTime = seekBar.value;
-        });
-        seekBar.addEventListener('touchend', () => {
-            isSeeking = false;
-            audioPlayer.currentTime = seekBar.value;
-        });
-        
-        // Обновление времени, пока ползунок перетаскивается (для отображения)
-        seekBar.addEventListener('input', () => {
-            if (isSeeking) {
-                timeIndicator.textContent = `${formatTime(seekBar.value)} / ${formatTime(audioPlayer.duration)}`;
-            }
-        });
-
-
-        // Кнопка Плей
-        playButton.addEventListener('click', function() {
-            if (audioPlayer.paused && audioPlayer.src) {
+        function playTrack(index) {
+            if (index >= 0 && index < currentPlaylist.length) {
+                currentTrackIndex = index;
+                audioPlayer.src = URL.createObjectURL(currentPlaylist[index].file);
                 audioPlayer.play();
-            } else if (audioPlayer.paused && !audioPlayer.src && playlist.children.length > 0) {
-                const visibleTracks = Array.from(playlist.children).filter(li => li.style.display !== 'none');
-                if (visibleTracks.length > 0) {
-                    playTrack(visibleTracks[0]);
+                playPauseBtn.innerHTML = '&#x23F8;&#xFE0F;';
+                updateTrackDisplay();
+            } else {
+                currentTrackIndex = -1;
+                audioPlayer.src = '';
+                playPauseBtn.innerHTML = '&#x25B6;&#xFE0F;';
+                updateTrackDisplay();
+            }
+        }
+        
+        function togglePlayPause() {
+            if (audioPlayer.paused) {
+                if (currentTrackIndex === -1 && currentPlaylist.length > 0) {
+                    playTrack(0);
+                } else if (currentTrackIndex !== -1) {
+                    audioPlayer.play();
+                    playPauseBtn.innerHTML = '&#x23F8;&#xFE0F;';
+                }
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.innerHTML = '&#x25B6;&#xFE0F;';
+            }
+        }
+
+        function stopPlayback() {
+             audioPlayer.pause();
+             audioPlayer.currentTime = 0;
+             playPauseBtn.innerHTML = '&#x25B6;&#xFE0F;';
+             timeSlider.value = 0;
+             currentTimeDisplay.textContent = '0:00';
+        }
+
+        function playNext() {
+            if (currentPlaylist.length === 0) return;
+            const nextIndex = (currentTrackIndex + 1) % currentPlaylist.length;
+            playTrack(nextIndex);
+        }
+
+        function playPrev() {
+            if (currentPlaylist.length === 0) return;
+            let prevIndex = currentTrackIndex - 1;
+            if (prevIndex < 0) {
+                prevIndex = currentPlaylist.length - 1;
+            }
+            playTrack(prevIndex);
+        }
+
+        // --- Функции плейлиста ---
+
+        function toggleShuffle() {
+            isShuffling = !isShuffling;
+            shuffleBtn.classList.toggle('shuffle-active', isShuffling);
+
+            const currentTrack = currentPlaylist[currentTrackIndex];
+
+            if (isShuffling) {
+                currentPlaylist = [...originalPlaylist];
+                shuffleArray(currentPlaylist);
+                
+                if (currentTrack) {
+                    const oldIndex = currentPlaylist.findIndex(t => t.id === currentTrack.id);
+                    if (oldIndex !== -1) {
+                        currentPlaylist.splice(oldIndex, 1);
+                        currentPlaylist.unshift(currentTrack);
+                    }
+                }
+                currentTrackIndex = 0;
+            } else {
+                const currentTrackId = currentTrack ? currentTrack.id : null;
+                currentPlaylist = [...originalPlaylist];
+                
+                if (currentTrackId !== null) {
+                    currentTrackIndex = currentPlaylist.findIndex(t => t.id === currentTrackId);
+                } else {
+                    currentTrackIndex = -1;
                 }
             }
-        });
+            renderPlaylist();
+        }
 
-        // Кнопка Пауза
-        pauseButton.addEventListener('click', function() {
-            audioPlayer.pause();
-        });
+        function renderPlaylist() {
+            playlistWindow.innerHTML = '';
+            if (currentPlaylist.length === 0) {
+                playlistWindow.innerHTML = '<div style="text-align: center; padding: 10px; color: #888;">Плейлист пуст. Добавьте файлы!</div>';
+                return;
+            }
 
-        // Стоп
-        stopButton.addEventListener('click', function() {
-            audioPlayer.pause();
-            audioPlayer.currentTime = 0; 
-            seekBar.value = 0; 
-            timeIndicator.textContent = `0:00 / ${formatTime(audioPlayer.duration || 0)}`;
-        });
+            currentPlaylist.forEach((track, index) => {
+                const item = document.createElement('div');
+                item.className = 'playlist-item';
+                item.dataset.index = index;
+                item.addEventListener('click', () => playTrack(index));
+                
+                const numberSpan = document.createElement('span');
+                numberSpan.className = 'playlist-item-number';
+                numberSpan.textContent = `${index + 1}.`;
+                item.appendChild(numberSpan);
 
-        // Предыдущий трек
-        prevButton.addEventListener('click', playPreviousTrack);
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'playlist-item-name';
+                nameSpan.textContent = track.name;
+                item.appendChild(nameSpan);
 
-        // Следующий трек
-        nextButton.addEventListener('click', playNextTrack);
-        
-        // Shuffle
-        shuffleButton.addEventListener('click', function() {
-            isShuffling = !isShuffling;
+                playlistWindow.appendChild(item);
+            });
+            updateTrackDisplay();
+        }
+
+        function addFilesToPlaylist(files) {
+            Array.from(files).forEach(file => {
+                const name = file.name.replace(/\.[^/.]+$/, "");
+                const newTrack = {
+                    id: Date.now() + Math.random(),
+                    name: name,
+                    file: file
+                };
+                originalPlaylist.push(newTrack);
+            });
             
             if (isShuffling) {
-                shuffleButton.classList.add('active');
+                toggleShuffle();
+                toggleShuffle();
             } else {
-                shuffleButton.classList.remove('active');
+                currentPlaylist = [...originalPlaylist];
+                renderPlaylist();
+            }
+
+            if (currentTrackIndex === -1 && currentPlaylist.length > 0) {
+                 playTrack(0);
+            }
+        }
+
+        // --- Обработчики событий ---
+        
+        document.getElementById('file-input').addEventListener('change', (event) => {
+            if (event.target.files.length > 0) {
+                addFilesToPlaylist(event.target.files);
+                event.target.value = null;
             }
         });
-        
-        // Обработчик изменения скорости
-        speedControl.addEventListener('input', function() {
-            const speed = parseFloat(this.value);
-            audioPlayer.playbackRate = speed;
-            speedValue.textContent = `${speed.toFixed(2)}x`;
-        });
-        
-        // Обработчик изменения громкости
-        volumeControl.addEventListener('input', function() {
-            const volume = parseFloat(this.value);
-            audioPlayer.volume = volume;
-            volumeValue.textContent = `${Math.round(volume * 100)}%`;
-        });
-        
-    </script>
 
+        document.getElementById('play-pause-btn').addEventListener('click', togglePlayPause);
+        document.getElementById('prev-btn').addEventListener('click', playPrev);
+        document.getElementById('next-btn').addEventListener('click', playNext);
+        document.getElementById('stop-btn').addEventListener('click', stopPlayback);
+        shuffleBtn.addEventListener('click', toggleShuffle);
+
+        // Временная шкала
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (!isNaN(audioPlayer.duration) && !isSeeking) {
+                const percentage = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                timeSlider.value = percentage;
+                currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+            }
+        });
+
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            if (!isNaN(audioPlayer.duration)) {
+                totalTimeDisplay.textContent = formatTime(audioPlayer.duration);
+            }
+        });
+
+        // Начало перемотки (удерживание ползунка)
+        timeSlider.addEventListener('mousedown', () => {
+            isSeeking = true;
+        });
+        timeSlider.addEventListener('touchstart', () => {
+            isSeeking = true;
+        });
+
+        // Перетаскивание ползунка
+        timeSlider.addEventListener('input', () => {
+            if (!isNaN(audioPlayer.duration)) {
+                const time = (timeSlider.value / 100) * audioPlayer.duration;
+                currentTimeDisplay.textContent = formatTime(time);
+            }
+        });
+
+        // Конец перемотки (отпускание ползунка)
+        timeSlider.addEventListener('mouseup', () => {
+            if (!isNaN(audioPlayer.duration)) {
+                const time = (timeSlider.value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = time;
+            }
+            isSeeking = false;
+        });
+        timeSlider.addEventListener('touchend', () => {
+            if (!isNaN(audioPlayer.duration)) {
+                const time = (timeSlider.value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = time;
+            }
+            isSeeking = false;
+        });
+
+        audioPlayer.addEventListener('ended', playNext);
+
+        // Инициализация
+        renderPlaylist();
+    </script>
 </body>
 </html>
