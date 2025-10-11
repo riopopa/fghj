@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMOLED-плеер: Единый размер кнопок</title>
+    <title>AMOLED-плеер: Адаптивный</title>
     <style>
         /* ОРАНЖЕВАЯ AMOLED Схема */
         
         .mini-player-container {
-            width: 350px;
+            /* Ключевое изменение: Адаптивная ширина */
+            width: 100%; 
+            max-width: 600px; /* Ограничиваем максимальную ширину для десктопов */
+            
             padding: 15px;
             border: 1px solid #333;
             border-radius: 12px;
@@ -16,6 +19,9 @@
             font-family: Arial, sans-serif;
             background-color: #000000;
             color: #E0E0E0;
+            /* Центрируем контейнер, если max-width активен */
+            margin-left: auto; 
+            margin-right: auto;
         }
 
         .current-track-info {
@@ -44,7 +50,7 @@
             margin: 0 5px;
         }
 
-        /* Основной стиль для ВСЕХ кнопок */
+        /* Основной стиль для ВСЕХ кнопок (Единый размер 40x40px) */
         .control-button, #add-file-label {
             background: none;
             border: none;
@@ -52,7 +58,6 @@
             color: #E0E0E0;
             transition: color 0.1s, transform 0.1s;
             
-            /* Единый размер для всех кнопок */
             width: 40px; 
             height: 40px; 
             display: flex;
@@ -60,13 +65,12 @@
             align-items: center;
             padding: 0;
             
-            /* Унифицированный размер эмодзи */
             font-size: 24px; 
         }
 
         /* Отдельные кнопки, которым нужен чуть больший размер шрифта */
         #shuffle-btn, #add-file-label {
-             font-size: 28px; /* Чуть больший размер для 🔀 и ➕ */
+             font-size: 28px; 
         }
         
         .control-button:hover, #add-file-label:hover {
@@ -80,7 +84,7 @@
             transform: scale(1.1);
         }
 
-        /* Шкала времени и Плейлист (без изменений) */
+        /* Шкала времени и Плейлист */
         .time-slider {
             width: 100%;
             height: 6px;
@@ -128,6 +132,7 @@
             cursor: pointer;
             transition: background-color 0.1s;
         }
+        
         .playlist-item-number {
             color: #888;
             width: 25px;
@@ -135,6 +140,7 @@
             text-align: right;
             margin-right: 8px;
         }
+        
         .playlist-item-name {
             white-space: nowrap;
             overflow: hidden;
@@ -234,8 +240,8 @@
                 currentTrackNameDisplay.textContent = 'Название трека - Исполнитель';
             }
 
-            document.querySelectorAll('.playlist-item').forEach((item, index) => {
-                item.classList.toggle('active', index === currentTrackIndex);
+            document.querySelectorAll('.playlist-item').forEach(item => {
+                item.classList.toggle('active', parseInt(item.dataset.index) === currentTrackIndex);
             });
         }
         
@@ -321,7 +327,7 @@
                     currentTrackIndex = -1;
                 }
             }
-            renderPlaylist();
+            renderPlaylist(); 
         }
 
         function renderPlaylist() {
@@ -334,14 +340,19 @@
             currentPlaylist.forEach((track, index) => {
                 const item = document.createElement('div');
                 item.className = 'playlist-item';
-                item.dataset.index = index;
+                item.dataset.index = index; 
                 item.addEventListener('click', () => playTrack(index));
                 
+                // Находим исходный порядковый номер трека
+                const originalOrderIndex = originalPlaylist.findIndex(t => t.id === track.id);
+                
+                // 1. Нумерация (фиксированная)
                 const numberSpan = document.createElement('span');
                 numberSpan.className = 'playlist-item-number';
-                numberSpan.textContent = `${index + 1}.`;
+                numberSpan.textContent = `${originalOrderIndex + 1}.`; 
                 item.appendChild(numberSpan);
 
+                // 2. Название трека
                 const nameSpan = document.createElement('span');
                 nameSpan.className = 'playlist-item-name';
                 nameSpan.textContent = track.name;
@@ -376,7 +387,7 @@
             }
         }
 
-        // --- Обработчики событий ---
+        // --- Обработчики событий (без изменений) ---
         
         document.getElementById('file-input').addEventListener('change', (event) => {
             if (event.target.files.length > 0) {
@@ -406,15 +417,10 @@
             }
         });
 
-        // Начало перемотки (удерживание ползунка)
-        timeSlider.addEventListener('mousedown', () => {
-            isSeeking = true;
-        });
-        timeSlider.addEventListener('touchstart', () => {
-            isSeeking = true;
-        });
+        // Начало/Конец перемотки (touch/mouse handlers)
+        timeSlider.addEventListener('mousedown', () => { isSeeking = true; });
+        timeSlider.addEventListener('touchstart', () => { isSeeking = true; });
 
-        // Перетаскивание ползунка
         timeSlider.addEventListener('input', () => {
             if (!isNaN(audioPlayer.duration)) {
                 const time = (timeSlider.value / 100) * audioPlayer.duration;
@@ -422,7 +428,6 @@
             }
         });
 
-        // Конец перемотки (отпускание ползунка)
         timeSlider.addEventListener('mouseup', () => {
             if (!isNaN(audioPlayer.duration)) {
                 const time = (timeSlider.value / 100) * audioPlayer.duration;
