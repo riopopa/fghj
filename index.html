@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMOLED-плеер: Автопрокрутка</title>
+    <title>AMOLED-плеер: Автопрокрутка и отступы</title>
     <style>
+        /* КЛЮЧЕВОЕ ИЗМЕНЕНИЕ */
+        body {
+            /* Добавляем внешние отступы ко всему содержимому */
+            margin: 20px; 
+            /* Для адаптивности и AMOLED-схемы */
+            background-color: #000000;
+        }
+        
         /* CSS остается без изменений */
         
         .mini-player-container {
@@ -231,8 +239,8 @@
             const activeTrack = document.querySelector('.playlist-item.active');
             if (activeTrack) {
                 activeTrack.scrollIntoView({
-                    behavior: 'smooth', // Делаем прокрутку плавной
-                    block: 'center'    // Центрируем элемент в окне плейлиста
+                    behavior: 'smooth', 
+                    block: 'center'   
                 });
             }
         }
@@ -254,7 +262,6 @@
                 item.classList.toggle('active', item.dataset.id == playingTrackId);
             });
             
-            // КЛЮЧЕВОЙ МОМЕНТ: Вызываем прокрутку после обновления активного класса
             scrollToActiveTrack();
         }
         
